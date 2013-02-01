@@ -11,15 +11,29 @@ include_recipe "oracle_instantclient"
 include_recipe "perl::dbd_oracle"
 include_recipe "perl::dbd_pg"
 
-rpm = "ora2pg-8.9-1.el6.noarch.rpm"
-
-cookbook_file "#{Chef::Config[:file_cache_path]}/#{rpm}" do
+archive_filename = "ora2pg-#{node[:ora2pg][:version]}.tar.bz2"
+remote_file "#{Chef::Config[:file_cache_path]}/#{archive_filename}" do
+  source node[:ora2pg][:url]
+  checksum node[:ora2pg][:archive_checksum]
   backup false
 end
 
-package "ora2pg" do
-  source "#{Chef::Config[:file_cache_path]}/#{rpm}"
-  options "--nogpgcheck" 
+directory "/etc/ora2pg" do
+  mode "0755"
+  owner "root"
+  group "root"
+  recursive true
+end
+
+bash "install_ora2pg" do
+  cwd Chef::Config[:file_cache_path]
+  code <<-EOS
+    tar -xvf #{archive_filename}
+    cd ora2pg-#{node[:ora2pg][:version]}
+    PREFIX=/opt/ora2pg perl Makefile.PL
+    make && make install && cp /opt/ora2pg/etc/opt/ora2pg/ora2pg.conf.dist /etc/ora2pg/ && rm -rf /opt/ora2pg/etc
+  EOS
+  not_if "/opt/ora2pg/usr/local/bin/ora2pg --version | grep -q 'v#{node[:ora2pg][:version]}$'"
 end
 
 template "/etc/ora2pg/ora2pg.conf" do
@@ -28,3 +42,10 @@ template "/etc/ora2pg/ora2pg.conf" do
   owner "root"
   group "root"
 end 
+
+template "/etc/profile.d/ora2pg.sh" do
+  source "profile.erb"
+  mode "0644"
+  owner "root"
+  group "root"
+end
