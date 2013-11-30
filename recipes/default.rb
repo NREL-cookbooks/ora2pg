@@ -33,7 +33,7 @@ bash "install_ora2pg" do
     PREFIX=/opt/ora2pg perl Makefile.PL
     make && make install && cp /opt/ora2pg/etc/opt/ora2pg/ora2pg.conf.dist /etc/ora2pg/ && rm -rf /opt/ora2pg/etc
   EOS
-  not_if "/opt/ora2pg/usr/local/bin/ora2pg --version | grep -q 'v#{node[:ora2pg][:version]}$'"
+  not_if "PERL5LIB=/opt/ora2pg/usr/local/share/perl5:$PERL5LIB /opt/ora2pg/usr/local/bin/ora2pg --version | grep -q 'v#{node[:ora2pg][:version]}$'"
 end
 
 template "/etc/ora2pg/ora2pg.conf" do
