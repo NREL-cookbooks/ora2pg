@@ -1,3 +1,4 @@
+name             "ora2pg"
 maintainer       "NREL"
 maintainer_email "nick.muerdter@nrel.gov"
 license          "All rights reserved"
